@@ -28,11 +28,11 @@ from metrics import metric_main
 
 def setup_snapshot_image_grid(training_set, random_seed=0):
     rnd = np.random.RandomState(random_seed)
-    gw = np.clip(7680 // training_set.image_shape[2], 7, 32)
-    gh = np.clip(4320 // training_set.image_shape[1], 4, 32)
+    gw = np.clip(3840 // training_set.image_shape[2], 7, 32)
+    gh = np.clip(2160 // training_set.image_shape[1], 4, 32)
 
     # No labels => show random subset of training samples.
-    if not training_set.has_labels:
+    if not training_set.has_labels or True:
         all_indices = list(range(len(training_set)))
         rnd.shuffle(all_indices)
         grid_indices = [all_indices[i % len(all_indices)] for i in range(gw * gh)]
@@ -136,6 +136,7 @@ def training_loop(
     training_set = dnnlib.util.construct_class_by_name(**training_set_kwargs) # subclass of training.dataset.Dataset
     training_set_sampler = misc.InfiniteSampler(dataset=training_set, rank=rank, num_replicas=num_gpus, seed=random_seed)
     training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
+
     if rank == 0:
         print()
         print('Num images: ', len(training_set))
@@ -401,9 +402,11 @@ def training_loop(
                 stats_tfevents.add_scalar(name, value.mean, global_step=global_step, walltime=walltime)
             for name, value in stats_metrics.items():
                 stats_tfevents.add_scalar(f'Metrics/{name}', value, global_step=global_step, walltime=walltime)
+                print(f'Metrics/{name}', value)
             stats_tfevents.flush()
         if progress_fn is not None:
             progress_fn(cur_nimg // 1000, total_kimg)
+        print("Progress:", cur_nimg // 1000, "/", total_kimg)
 
         # Update state.
         cur_tick += 1

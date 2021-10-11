@@ -295,6 +295,8 @@ class SynthesisLayer(torch.nn.Module):
         if self.use_noise and noise_mode == 'const':
             noise = self.noise_const * self.noise_strength
 
+        # Horni
+
         flip_weight = (self.up == 1) # slightly faster
         x = modulated_conv2d(x=x, weight=self.weight, styles=styles, noise=noise, up=self.up,
             padding=self.padding, resample_filter=self.resample_filter, flip_weight=flip_weight, fused_modconv=fused_modconv)

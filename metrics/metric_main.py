@@ -80,10 +80,28 @@ def report_metric(result_dict, run_dir=None, snapshot_pkl=None):
 # Primary metrics.
 
 @register_metric
+def fid5k_full(opts):
+    opts.dataset_kwargs.update(max_size=None, xflip=False)
+    fid = frechet_inception_distance.compute_fid(opts, max_real=None, num_gen=5000)
+    return dict(fid5k_full=fid)
+
+@register_metric
+def fid20k_full(opts):
+    opts.dataset_kwargs.update(max_size=None, xflip=False)
+    fid = frechet_inception_distance.compute_fid(opts, max_real=None, num_gen=20000)
+    return dict(fid20k_full=fid)
+
+@register_metric
 def fid50k_full(opts):
     opts.dataset_kwargs.update(max_size=None, xflip=False)
     fid = frechet_inception_distance.compute_fid(opts, max_real=None, num_gen=50000)
     return dict(fid50k_full=fid)
+
+@register_metric
+def kid5k_full(opts):
+    opts.dataset_kwargs.update(max_size=None, xflip=False)
+    kid = kernel_inception_distance.compute_kid(opts, max_real=100000, num_gen=5000, num_subsets=10, max_subset_size=100)
+    return dict(kid5k_full=kid)
 
 @register_metric
 def kid50k_full(opts):

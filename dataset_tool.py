@@ -10,6 +10,7 @@ import functools
 import io
 import json
 import os
+import re
 import pickle
 import sys
 import tarfile
@@ -17,6 +18,7 @@ import gzip
 import zipfile
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Union
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 import click
 import numpy as np
@@ -131,6 +133,109 @@ def open_lmdb(lmdb_dir: str, *, max_images: Optional[int]):
                     print(sys.exc_info()[1])
 
     return max_idx, iterate_images()
+
+#----------------------------------------------------------------------------
+
+def open_anime(folder: str, *, max_images: Optional[int]):
+
+    images = []
+    labels = []
+
+    with open(folder + "/CUB_200_2011/images.txt", "rb") as _f:
+        _lines = _f.readlines()
+        images = list(map(lambda x: x.decode("utf-8").strip().split(" ")[1], _lines))
+
+    # build text ids
+    text_labels = []
+    for filebase in images:
+
+        text_file = os.path.join(folder, "text/", filebase)
+        text_file = text_file.replace(".jpg", ".txt")
+        text_file = text_file.replace(".png", ".txt")
+
+        with open(text_file, "r") as _f:
+            _line = _f.readlines()[0].strip()
+            text_labels += re.split("[\s]{1,}", _line)
+
+    text_labels = list(set(text_labels))
+
+    # Save text ids
+    with open("data/text_ids", "w") as _f:
+        c = 1
+        for label in text_labels:
+            _f.write(str(c))
+            _f.write(" ")
+            _f.write(label)
+            _f.write("\n")
+            c += 1
+
+    def seq_encode(text_labels, single_list, size=30):
+
+        encode = []
+        extra = 0
+
+        for i in range(0, size):
+
+            try:
+                label = single_list[i]
+                encode.append(text_labels.index(label)+1)
+            except IndexError:
+                encode.append(0)
+            except ValueError:
+                extra += 1
+
+        for i in range(0, extra):
+            encode.append(0)
+
+        return encode
+
+    def one_hot_encode(text_labels, single_list):
+
+        encode = []
+
+        for label in text_labels:
+
+            if label in single_list:
+                encode.append(1)
+            else:
+                encode.append(0)
+
+        return encode
+
+
+    def iterate_images():
+
+        idx = 0
+        for filebase in images:
+
+            image_file = os.path.join(folder, "CUB_200_2011/images", filebase)
+            text_file = os.path.join(folder, "text/", filebase)
+            text_file = text_file.replace(".jpg", ".txt")
+            text_file = text_file.replace(".png", ".txt")
+
+            img = load_img(image_file)
+            img = img.resize([256,256])
+            img = img_to_array(img) #/ 255.0
+
+            label = [int(filebase.split(".")[0])]
+
+            with open(text_file, "r") as _f:
+                _line = _f.readlines()[0].strip()
+                text = re.split("[\s]{1,}", _line)
+                text = _line.split(" ")
+                text = seq_encode(text_labels, text)
+
+            yield dict(img=img, label=text) #, text=text)
+
+            if idx >= max_idx-1:
+                break
+
+            idx += 1
+
+    max_idx = maybe_min(len(images), max_images)
+
+    return max_idx, iterate_images()
+
 
 #----------------------------------------------------------------------------
 
@@ -253,6 +358,8 @@ def open_dataset(source, *, max_images: Optional[int]):
     if os.path.isdir(source):
         if source.rstrip('/').endswith('_lmdb'):
             return open_lmdb(source, max_images=max_images)
+        if source.rstrip('/').find('anime') != -1:
+            return open_anime(source, max_images=max_images)
         else:
             return open_image_folder(source, max_images=max_images)
     elif os.path.isfile(source):
@@ -392,12 +499,15 @@ def convert_dataset(
     dataset_attrs = None
 
     labels = []
+    text = []
+
     for idx, image in tqdm(enumerate(input_iter), total=num_files):
         idx_str = f'{idx:08d}'
         archive_fname = f'{idx_str[:5]}/img{idx_str}.png'
 
         # Apply crop and resize.
-        img = transform_image(image['img'])
+        #img = transform_image(image['img'])
+        img = image['img']
 
         # Transform may drop images.
         if img is None:
@@ -426,15 +536,22 @@ def convert_dataset(
             error(f'Image {archive_fname} attributes must be equal across all images of the dataset.  Got:\n' + '\n'.join(err))
 
         # Save the image as an uncompressed PNG.
-        img = PIL.Image.fromarray(img, { 1: 'L', 3: 'RGB' }[channels])
+        img = array_to_img(img) #  PIL.Image.fromarray(img, { 1: 'L', 3: 'RGB' }[channels])
         image_bits = io.BytesIO()
         img.save(image_bits, format='png', compress_level=0, optimize=False)
         save_bytes(os.path.join(archive_root_dir, archive_fname), image_bits.getbuffer())
         labels.append([archive_fname, image['label']] if image['label'] is not None else None)
 
+        if "text" in image:
+            text.append([archive_fname, image['text']] if image['text'] is not None else None)
+
     metadata = {
         'labels': labels if all(x is not None for x in labels) else None
     }
+
+    if "text" in image:
+        metadata["text"] = text if all(x is not None for x in text) else None
+
     save_bytes(os.path.join(archive_root_dir, 'dataset.json'), json.dumps(metadata))
     close_dest()
 

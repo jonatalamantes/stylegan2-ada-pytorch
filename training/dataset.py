@@ -55,10 +55,10 @@ class Dataset(torch.utils.data.Dataset):
                 self._raw_labels = np.zeros([self._raw_shape[0], 0], dtype=np.float32)
             assert isinstance(self._raw_labels, np.ndarray)
             assert self._raw_labels.shape[0] == self._raw_shape[0]
-            assert self._raw_labels.dtype in [np.float32, np.int64]
-            if self._raw_labels.dtype == np.int64:
-                assert self._raw_labels.ndim == 1
-                assert np.all(self._raw_labels >= 0)
+            #assert self._raw_labels.dtype in [np.float32, np.int64]
+            #if self._raw_labels.dtype == np.int64:
+            #    assert self._raw_labels.ndim == 1
+            #    assert np.all(self._raw_labels >= 0)
         return self._raw_labels
 
     def close(self): # to be overridden by subclass
@@ -94,10 +94,10 @@ class Dataset(torch.utils.data.Dataset):
 
     def get_label(self, idx):
         label = self._get_raw_labels()[self._raw_idx[idx]]
-        if label.dtype == np.int64:
-            onehot = np.zeros(self.label_shape, dtype=np.float32)
-            onehot[label] = 1
-            label = onehot
+        #if label.dtype == np.int64:
+        #    onehot = np.zeros(self.label_shape, dtype=np.float32)
+        #    onehot[label] = 1
+        #    label = onehot
         return label.copy()
 
     def get_details(self, idx):
@@ -130,7 +130,7 @@ class Dataset(torch.utils.data.Dataset):
     def label_shape(self):
         if self._label_shape is None:
             raw_labels = self._get_raw_labels()
-            if raw_labels.dtype == np.int64:
+            if raw_labels.dtype == np.int64 and False:#Horni:
                 self._label_shape = [int(np.max(raw_labels)) + 1]
             else:
                 self._label_shape = raw_labels.shape[1:]
@@ -230,7 +230,7 @@ class ImageFolderDataset(Dataset):
         labels = dict(labels)
         labels = [labels[fname.replace('\\', '/')] for fname in self._image_fnames]
         labels = np.array(labels)
-        labels = labels.astype({1: np.int64, 2: np.float32}[labels.ndim])
+        #labels = labels.astype({1: np.int64, 2: np.float32}[labels.ndim])
         return labels
 
 #----------------------------------------------------------------------------
