@@ -281,6 +281,9 @@ Please refer to [`python train.py --help`](./docs/train-help.txt) for the full l
 ## Examples
 ![Example Anime](./example_anime.png)
 
+## Pretraing Models
+[Anime](https://drive.google.com/open?id=1PnZvTX2LUse46DB-7UkvqxubHtaoY_6U)
+
 ## Expected training time
 
 The total training time depends heavily on resolution, number of GPUs, dataset, desired quality, and hyperparameters. The following table lists expected wallclock times to reach different points in the training, measured in thousands of real images shown to the discriminator ("kimg"):
