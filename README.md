@@ -279,7 +279,7 @@ The training configuration can be further customized with additional command lin
 Please refer to [`python train.py --help`](./docs/train-help.txt) for the full list.
 
 ## Examples
-![](https://github.com/jonatalamantes/stylegan2-ada-pytorch/blob/master/example_anime.png)
+![Example Anime](./example_anime.png)
 
 ## Expected training time
 
