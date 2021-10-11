@@ -215,6 +215,12 @@ python dataset_tool.py --source=~/downloads/lsun/raw/car_lmdb --dest=~/datasets/
     --transform=center-crop-wide --width=512 --height=384 --max_images=200000
 ```
 
+**Anime**
+
+Step 1: Download ZIP [Anime](https://drive.google.com/open?id=1e61t_CGAQEaJz83lCaESy4ZWwXA2C5sc)
+
+Step 2: Download Classes TXT [Classes](https://drive.google.com/open?id=18zen6aJBRYm3zjZ3gpgBz-1j0oxHcBAr)
+
 **BreCaHAD**:
 
 Step 1: Download the [BreCaHAD dataset](https://figshare.com/articles/BreCaHAD_A_Dataset_for_Breast_Cancer_Histopathological_Annotation_and_Diagnosis/7379186).
