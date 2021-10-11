@@ -272,6 +272,9 @@ The training configuration can be further customized with additional command lin
 
 Please refer to [`python train.py --help`](./docs/train-help.txt) for the full list.
 
+## Examples
+![](https://github.com/jonatalamantes/stylegan2-ada-pytorch/blob/master/example_anime.png)
+
 ## Expected training time
 
 The total training time depends heavily on resolution, number of GPUs, dataset, desired quality, and hyperparameters. The following table lists expected wallclock times to reach different points in the training, measured in thousands of real images shown to the discriminator ("kimg"):
